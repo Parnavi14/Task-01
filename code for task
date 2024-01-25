@@ -1,0 +1,59 @@
+import random
+import os
+from Bio import SeqIO
+from Bio.Seq import Seq
+
+
+def extract_sequences(primary_fasta, bed_file):
+    extracted_sequences = []
+    for record in SeqIO.parse(primary_fasta, "fasta"):
+        sequence_id = record.id
+        for line in open(bed_file):
+            scaffold, start, end = line.strip().split("\t")
+            if sequence_id == scaffold:
+                start, end = int(start), int(end)
+                extracted_sequence = record.seq[start-1:end]
+                extracted_sequences.append((sequence_id, extracted_sequence))
+    return extracted_sequences
+
+def reverse_complement(sequences):
+    reversed_complemented_sequences = []
+    for sequence_id, sequence in sequences:
+        reversed_complemented_sequence = sequence.reverse_complement()
+        reversed_complemented_sequences.append((sequence_id, reversed_complemented_sequence))
+    return reversed_complemented_sequences
+
+def introduce_random_change(sequences):
+    processed_sequences = []
+    for sequence_id, sequence in sequences:
+        position_to_change = random.randint(0, len(sequence) - 1)
+        new_nucleotide = random.choice(['A', 'T', 'G', 'C'])
+        processed_sequence = sequence.tomutable()
+        processed_sequence[position_to_change] = new_nucleotide
+        processed_sequences.append((sequence_id, processed_sequence.toseq()))
+    return processed_sequences
+
+def insert_processed_sequence(primary_fasta, processed_sequences, output_fasta):
+    with open(output_fasta, 'w') as output:
+        for record in SeqIO.parse(primary_fasta, "fasta"):
+            sequence_id = record.id
+            processed_sequence = next(seq for seq_id, seq in processed_sequences if seq_id == sequence_id)
+            output.write(f'>{sequence_id}\n{processed_sequence}\n')
+
+
+primary_fasta = 'C:/Users/ADMIN/Desktop/internshiptask/sequence.fasta'
+bed_file = 'C:/Users/ADMIN/Desktop/internshiptask/output.bed'
+output_fasta = 'C:/Users/ADMIN/Desktop/internshiptask/output'
+
+# to extract subsequence
+extracted_sequences = extract_sequences(primary_fasta, bed_file)
+
+# Reverse complement  of the sequence
+reversed_complemented_sequences = reverse_complement(extracted_sequences)
+
+#  random 1 nucleotide change
+processed_sequences = introduce_random_change(reversed_complemented_sequences)
+
+# processed subsequence back to the primary sequence 
+insert_processed_sequence(primary_fasta, processed_sequences, output_fasta)
+
