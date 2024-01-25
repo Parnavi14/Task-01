@@ -1,0 +1,52 @@
+# to create bed file
+import random
+from Bio import SeqIO
+from Bio.Seq import Seq
+
+def fasta_to_bed(fasta_file, bed_file):
+    with open(bed_file, "w") as bed:
+        for record in SeqIO.parse(fasta_file, "fasta"):
+            # Extract information from the header (modify this based on your FASTA header format)
+            header_parts = record.id.split("_")
+            start_pos = int(header_parts[-3])
+            end_pos = int(header_parts[-1])
+
+
+            bed.write(f"{record.id}\t{start_pos - 1}\t{end_pos}\n")
+
+
+fasta_file = 'C:/Users/ADMIN/Desktop/internshiptask/sequence.fasta'
+bed_file = 'C:/Users/ADMIN/Desktop/internshiptask/output.bed'
+
+
+fasta_to_bed(fasta_file, bed_file)
+
+# to convert extracted subsequence into reverse complementary sequence
+
+input_file = 'C:/Users/ADMIN/Desktop/internshiptask/extoutput.fasta'
+output_file = 'C:/Users/ADMIN/Desktop/internshiptask/revcomp.fasta'
+
+with open(input_file, "r") as handle:
+    records = list(SeqIO.parse(handle, "fasta"))
+
+reversecomp_sequences = [record.reverse_complement(id="") for record in records]
+
+with open(output_file, "w") as handle:
+    SeqIO.write(reversecomp_sequences, handle, "fasta")
+
+input_file = 'C:/Users/ADMIN/Desktop/internshiptask/revcomp.fasta'
+output_file = 'C:/Users/ADMIN/Desktop/internshiptask/processed.fasta'
+
+with open(input_file, "r") as handle:
+    records = list(SeqIO.parse(handle, "fasta"))
+
+processed_sequences = []
+for record in records:
+    sequence = list(str(record.seq))
+    position_to_change = random.randint(0, len(sequence) - 1)
+    new_nucleotide = random.choice(['A', 'T', 'G', 'C'])
+    sequence[position_to_change] = new_nucleotide
+    processed_sequences.append(Seq("".join(sequence), record.seq.alphabet))
+
+with open(output_file, "w") as handle:
+    SeqIO.write(processed_sequences, handle, "fasta")
